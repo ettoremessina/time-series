@@ -45,18 +45,18 @@ if __name__ == "__main__":
 
     print("#### Started {} {} ####".format(__file__, args));
 
-    y_timeserie = []
+    y_timeseries = []
     with open(args.timeserie_filename) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         next(csv_reader, None)
         for row in csv_reader:
-            y_timeserie.append(float(row[0]))
+            y_timeseries.append(float(row[0]))
 
     model = tfm.load_model(args.model_path)
     start_time = time.time()
 
     y_forecast = np.array([])
-    to_predict_flat = np.array(y_timeserie[-args.sample_length:])
+    to_predict_flat = np.array(y_timeseries[-args.sample_length:])
     for i in range(args.forecast_length):
         to_predict = to_predict_flat.reshape((1, args.sample_length, features))
         ###to_predict = to_predict_flat.reshape((1, 1, args.sample_length, features))
