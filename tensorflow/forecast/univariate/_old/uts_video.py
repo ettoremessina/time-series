@@ -8,6 +8,15 @@ import matplotlib.pyplot as plt
 
 features = 1
 
+def read_timeseries(filename):
+    y_values = []
+    with open(filename) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        next(csv_reader, None)
+        for row in csv_reader:
+            y_values.append(float(row[0]))
+    return y_values
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='uts_video.py generates an animated git that shows the forecast curve computed on an input time series as the epochs change.')
 
@@ -22,6 +31,12 @@ if __name__ == "__main__":
                         dest='timeseries_filename',
                         required=True,
                         help='time series file (csv format)')
+
+    parser.add_argument('--exact',
+                        type=str,
+                        dest='exact_filename',
+                        required=False,
+                        help='exact future time series file (csv format)')
 
     parser.add_argument('--samplelength',
                         type=int,
@@ -44,9 +59,30 @@ if __name__ == "__main__":
                         default='',
                         help='the animated .gif file name to generate')
 
-    parser.add_argument('--fps',
+    parser.add_argument('--xlabel',
+                        type=str,
+                        dest='x_axis_label',
+                        required=False,
+                        default='',
+                        help='label of x axis')
+
+    parser.add_argument('--ylabel',
+                        type=str,
+                        dest='y_axis_label',
+                        required=False,
+                        default='',
+                        help='label of y axis')
+
+    parser.add_argument('--labelfontsize',
                         type=int,
-                        dest='fps',
+                        dest='label_font_size',
+                        required=False,
+                        default=18,
+                        help='label font size')
+
+    parser.add_argument('--frameperseconds',
+                        type=int,
+                        dest='frame_per_seconds',
                         required=False,
                         default=10,
                         help='frame per seconds')
@@ -55,34 +91,33 @@ if __name__ == "__main__":
                         type=float,
                         dest='width',
                         required=False,
-                        default=9.0,
+                        default=19.20,
                         help='width of animated git (in inch)')
 
     parser.add_argument('--height',
                         type=float,
                         dest='height',
                         required=False,
-                        default=6.0,
+                        default=10.80,
                         help='height of animated git (in inch)')
 
     args = parser.parse_args()
 
     print("#### Started {} {} ####".format(__file__, args));
 
-    y_timeseries = []
-    with open(args.timeseries_filename) as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=',')
-        next(csv_reader, None)
-        for row in csv_reader:
-            y_timeseries.append(float(row[0]))
+    y_timeseries = read_timeseries(args.timeseries_filename)
+    y_exact = []
+    if args.exact_filename:
+        y_exact = read_timeseries(args.exact_filename)
 
-    miny = min(y_timeseries) #TODO: not good in general
-    maxy = max(y_timeseries) #TODO: not good in general
+    miny = min(np.concatenate([y_timeseries, y_exact])) #TODO: not good in general
+    maxy = max(np.concatenate([y_timeseries, y_exact])) #TODO: not good in general
 
     miny = miny - 0.1 * (maxy - miny)
     maxy = maxy + 0.1 * (maxy - miny)
 
     frames = []
+    plt.rcParams.update({'font.size': args.label_font_size})
     fig, ax = plt.subplots(figsize=(args.width, args.height))
 
     epochs = [mdl for mdl in sorted(os.listdir(args.model_snapshots_path))]
@@ -103,9 +138,12 @@ if __name__ == "__main__":
         plt.cla()
         ax.set_xlim(0, len(y_timeseries) + args.forecast_length)
         ax.set_ylim(miny, maxy)
-        ax.set_title('Epoch = %d' % int(epoch), fontdict={'size': 10, 'color': 'orange'})
-        plt.scatter(range(len(y_timeseries)), y_timeseries, color='blue', s=1, marker='.')
-        plt.scatter(range(len(y_timeseries), len(y_timeseries) + args.forecast_length), y_forecast, color='red', s=1, marker='.')
+        ax.set_title('Epoch = %d' % int(epoch), fontdict={'size': args.label_font_size, 'color': 'orange'})
+        ax.set_xlabel(args.x_axis_label, fontdict={'size': args.label_font_size})
+        ax.set_ylabel(args.y_axis_label, fontdict={'size': args.label_font_size})
+        plt.scatter(range(len(y_timeseries)), y_timeseries, color='blue', s=2, marker='.')
+        plt.scatter(range(len(y_timeseries), len(y_timeseries) + len(y_exact)), y_exact, color='green', s=2, marker='.')
+        plt.scatter(range(len(y_timeseries), len(y_timeseries) + args.forecast_length), y_forecast, color='red', s=2, marker='.')
 
         # Used to return the plot as an image array
         # (https://ndres.me/post/matplotlib-animated-gifs-easily/)
@@ -115,7 +153,7 @@ if __name__ == "__main__":
         frames.append(frame)
         print ('Generated frame for epoch {}'.format(epoch))
 
-    imageio.mimsave(args.save_gif_video, frames, fps=args.fps)
+    imageio.mimsave(args.save_gif_video, frames, fps=args.frame_per_seconds)
     print ('Saved {} animated gif'.format(args.save_gif_video))
 
     print("#### Terminated {} ####".format(__file__));

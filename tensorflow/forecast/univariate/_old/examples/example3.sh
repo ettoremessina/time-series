@@ -1,18 +1,20 @@
-#!/bin/bash
+#!/bin/sh
 rm -rf dumps/example3
 rm -rf logs/example3
 rm -rf snaps/example3
 rm -rf media/example3_diag
 
+FT="2.0 * np.sin(t/10.0) + 1.5 * np.cos(t/20.0)"
 SL=20
 
-python ../uts_gen.py  --tsout timeseries/example3_train.csv --ft "2.0 * np.sin(t/10.0) + 1.5 * np.cos(t/20.0)" --rend 200
+python ../uts_gen.py  --tsout timeseries/example3_train.csv --ft "$FT" --rend 200
+python ../uts_gen.py  --tsout timeseries/example3_exact.csv --ft "$FT" --rbegin 201 --rend 500
 
 python ../uts_fit.py \
      --traints timeseries/example3_train.csv \
      --samplelength $SL \
      --modelout models/example3 \
-     --epochs 50 \
+     --epochs 80 \
      --batch_size 25 \
      --hlayers 200 400  200 \
      --hbidirectionals no no no \
@@ -35,12 +37,13 @@ python ../uts_forecast.py \
 python ../uts_scatter.py --ts timeseries/example3_train.csv --forecast forecasts/example3_forecast.csv --savefig media/example3.png
 
 #python ../uts_diag.py --dump dumps/example3
-python ../uts_diag.py --dump dumps/example3 --savefigdir media/example3_diag
+#python ../uts_diag.py --dump dumps/example3 --savefigdir media/example3_diag
 
 python ../uts_video.py \
   --modelsnap snaps/example3 \
   --ts timeseries/example3_train.csv \
+  --exact timeseries/example3_exact.csv \
   --samplelength $SL \
   --forecastlength 300 \
-  --fps 4 \
+  --frameperseconds 4 \
   --savevideo media/example3_video.gif
