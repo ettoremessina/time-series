@@ -8,24 +8,24 @@ if __name__ == "__main__":
         %(prog)s shows two joined x/y scatter graphs:
         \tthe blue one is the time series
         \tthe red one is the forecast
-        \tthe optional orange one is the actual time series
+        \tthe optional green one is the actual time series
      '''))
 
     parser.add_argument('--version', action='version', version='%(prog)s 1.0.0')
 
-    parser.add_argument('--ts',
+    parser.add_argument('--tstrain',
                         type=str,
                         dest='timeseries_filename',
                         required=True,
                         help='time series file (csv format)')
 
-    parser.add_argument('--forecast',
+    parser.add_argument('--tsforecast',
                         type=str,
                         dest='forecast_filename',
                         required=True,
                         help='forecast file (csv format)')
 
-    parser.add_argument('--actual',
+    parser.add_argument('--tsactual',
                         type=str,
                         dest='actual_filename',
                         required=False,
@@ -38,6 +38,41 @@ if __name__ == "__main__":
                         default='',
                         help='if present, it set the title of chart')
 
+    parser.add_argument('--xlabel',
+                        type=str,
+                        dest='x_axis_label',
+                        required=False,
+                        default='',
+                        help='label of x axis')
+
+    parser.add_argument('--ylabel',
+                        type=str,
+                        dest='y_axis_label',
+                        required=False,
+                        default='',
+                        help='label of y axis')
+
+    parser.add_argument('--labelfontsize',
+                        type=int,
+                        dest='label_font_size',
+                        required=False,
+                        default=9,
+                        help='label font size')
+
+    parser.add_argument('--width',
+                        type=float,
+                        dest='width',
+                        required=False,
+                        default=9.60,
+                        help='width of animated git (in inch)')
+
+    parser.add_argument('--height',
+                        type=float,
+                        dest='height',
+                        required=False,
+                        default=5.40,
+                        help='height of animated git (in inch)')
+
     parser.add_argument('--savefig',
                         type=str,
                         dest='save_figure_filename',
@@ -48,6 +83,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     print("#### Started %s ####" % os.path.basename(__file__));
+
+    plt.rcParams.update({'font.size': args.label_font_size})
+    fig, ax = plt.subplots(figsize=(args.width, args.height))
+
+    ax.set_title(args.figure_title, fontdict={'size': args.label_font_size, 'color': 'orange'})
+    ax.set_xlabel(args.x_axis_label, fontdict={'size': args.label_font_size})
+    ax.set_ylabel(args.y_axis_label, fontdict={'size': args.label_font_size})
 
     t = 0.0
     with open(args.timeseries_filename) as csv_file:
@@ -71,10 +113,9 @@ if __name__ == "__main__":
             csv_reader = csv.reader(csv_file, delimiter=',')
             next(csv_reader, None)
             for row in csv_reader:
-                plt.scatter(t, float(row[0]), color='orange', s=1, marker='.')
+                plt.scatter(t, float(row[0]), color='green', s=1, marker='.')
                 t += 1
 
-    plt.title(args.figure_title)
     if args.save_figure_filename:
         plt.savefig(args.save_figure_filename)
     else:
