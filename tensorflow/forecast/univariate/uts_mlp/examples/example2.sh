@@ -35,13 +35,14 @@ python ../uts_mlp_fit.py \
 #     --modelsnapout snaps/example2 \
 #     --modelsnapfreq 5
 
-python ../uts_mlp_forecast.py \
+python ../../common/uts_forecast.py \
     --tstrain timeseries/example2_train.csv \
     --tsactual timeseries/example2_actual.csv \
     --strategy recursive \
     --samplelength $SL \
     --fclength $FL \
     --model models/example2 \
+    --modelkind mlp \
     --fcout forecasts/example2_forecast.csv \
     --error "MeanSquaredError()"
 
@@ -50,10 +51,10 @@ python ../../../../../common/uts_scatter.py \
     --tsforecast forecasts/example2_forecast.csv \
     --tsactual timeseries/example2_actual.csv
 
-#python ../../../common/uts_diagnostic.py --dump dumps/example2
-#python ../../../common/uts_diagnostic.py --dump dumps/example2 --savefigdir media/example2_diag
+#python ../../common/uts_diagnostic.py --dump dumps/example2
+#python ../../common/uts_diagnostic.py --dump dumps/example2 --savefigdir media/example2_diag
 
-#python ../../../common/uts_video.py \
+#python ../../common/uts_video.py \
 #  --modelsnap snaps/example2 \
 #  --tstrain timeseries/example2_train.csv \
 #  --samplelength $SL \

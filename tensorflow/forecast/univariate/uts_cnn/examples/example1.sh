@@ -19,19 +19,20 @@ python ../../../../../common/uts_gen.py  \
      --rbegin 200 \
      --rend 400
 
-python ../uts_mlp_fit.py \
+python ../uts_cnn_fit.py \
      --tstrain timeseries/example1_train.csv \
      --samplelength $SL \
      --modelout models/example1 \
-     --epochs 100 \
+     --cnnlayers "conv (64, 3, 'relu', 'RandomUniform(minval=-0.1, maxval=0.1)', 'Ones()')" "maxpool (2)" "conv (64, 2, 'relu')" "maxpool (1)" \
+     --epochs 200 \
      --batchsize 40 \
-     --hlayers 80 80 \
-     --hactivations "tanh" "tanh" \
      --optimizer "Adam()" \
-     --loss "MeanSquaredError()" \
-     --metrics "mean_absolute_error" "mean_squared_logarithmic_error" \
-     --dumpout dumps/example1 \
-     --logsout logs/example1
+     --loss "MeanSquaredError()"
+#     --denselayers 80 80 \
+#     --denseactivations "tanh" "tanh" \
+#     --metrics "mean_absolute_error" "mean_squared_logarithmic_error" \
+#     --dumpout dumps/example1 \
+#     --logsout logs/example1
 #     --modelsnapout snaps/example1 \
 #     --modelsnapfreq 10
 
@@ -42,9 +43,9 @@ python ../../common/uts_forecast.py \
     --samplelength $SL \
     --fclength $FL \
     --model models/example1 \
-    --modelkind mlp \
+    --modelkind cnn \
     --fcout forecasts/example1_forecast.csv \
-    --error "MeanAbsoluteError()"
+    --error "MeanSquaredError()"
 
 python ../../../../../common/uts_scatter.py \
     --tstrain timeseries/example1_train.csv \
@@ -54,7 +55,7 @@ python ../../../../../common/uts_scatter.py \
     --xlabel "t" \
     --ylabel "y"
 
-python ../../common/uts_diagnostic.py --dump dumps/example1
+#python ../../common/uts_diagnostic.py --dump dumps/example1
 #python ../../common/uts_diagnostic.py --dump dumps/example1 --savefigdir media/example1_diag
 
 #python ../../common/uts_video.py \

@@ -39,6 +39,13 @@ if __name__ == "__main__":
                         required=True,
                         help='model path')
 
+    parser.add_argument('--modelkind',
+                        type=str,
+                        dest='model_kind',
+                        required=True,
+                        choices=['mlp', 'cnn'],
+                        help='recursive uses previous predictions as input for future predictions, walk_forward uses actual as input (default: %(default)s)')
+
     parser.add_argument('--tstrain',
                         type=str,
                         dest='timeseries_filename',
@@ -108,7 +115,10 @@ if __name__ == "__main__":
     y_forecast = np.array([])
     to_predict_flat = np.array(y_timeseries[-args.sample_length:])
     for i in range(args.forecast_length):
-        to_predict = to_predict_flat.reshape((1, args.sample_length))
+        if args.model_kind == 'mlp':
+            to_predict = to_predict_flat.reshape((1, args.sample_length))
+        elif args.model_kind == 'cnn':
+            to_predict = to_predict_flat.reshape((1, args.sample_length, 1))
         prediction = model.predict(to_predict, verbose=1)[0]
         y_forecast = np.append(y_forecast, prediction)
         to_predict_flat = np.delete(to_predict_flat, 0)

@@ -32,7 +32,7 @@ if __name__ == "__main__":
                         required=True,
                         help='time series file (csv format)')
 
-    parser.add_argument('--actual',
+    parser.add_argument('--tsactual',
                         type=str,
                         dest='actual_filename',
                         required=False,
