@@ -19,15 +19,16 @@ python ../../../../../common/uts_gen.py  \
      --rbegin 200 \
      --rend 400
 
-python ../uts_cnn_fit.py \
+python ../uts_lstm_fit.py \
      --tstrain timeseries/example1_train.csv \
      --samplelength $SL \
      --modelout models/example1 \
-     --cnnlayers "conv(64, 3, 'relu', 'RandomUniform(minval=-0.1, maxval=0.1)', 'Ones()')" "maxpool(2)" "conv(64, 2, 'tanh')" "maxpool (1)" \
-     --epochs 200 \
+     --lstmlayers "lstm(120, 'tanh')" \
+     --epochs 80 \
      --batchsize 40 \
      --optimizer "Adam()" \
      --loss "MeanSquaredError()"
+#     --cnnlayers "conv(64, 3, 'relu', 'RandomUniform(minval=-0.1, maxval=0.1)', 'Ones()')" "maxpool(2)" "conv(64, 2, 'tanh')" "maxpool (1)" \
 #     --denselayers "dense(80, 'tanh', 'TruncatedNormal(mean=0.0, stddev=0.2)', 'TruncatedNormal(mean=0.0, stddev=0.5)')" \
 #     --metrics "mean_absolute_error" "mean_squared_logarithmic_error" \
 #     --dumpout dumps/example1 \

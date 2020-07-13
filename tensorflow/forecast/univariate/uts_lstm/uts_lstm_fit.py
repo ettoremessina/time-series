@@ -10,7 +10,7 @@ import tensorflow.keras.losses as tkl
 import tensorflow.keras.metrics as tkm
 import tensorflow.keras.callbacks as tfcb
 import tensorflow.keras.initializers as tfi
-from tensorflow.keras.layers import Input, Dense, Conv1D, MaxPooling1D, Dropout, Flatten, concatenate
+from tensorflow.keras.layers import Input, Dense, Conv1D, MaxPooling1D, Dropout, Flatten, LSTM, concatenate
 from tensorflow.keras.models import Model
 import pandas as pd
 
@@ -39,6 +39,41 @@ def build_samples(seq):
     X_train, y_train = aggregate.values[:, :-1], aggregate.values[:, -1]
     X_train = X_train.reshape((X_train.shape[0], X_train.shape[1], 1))
     return X_train, y_train
+
+def build_lstm_layer(lstm_layer_layout):
+    if lstm_layer_layout.startswith('lstm'):
+        tupla_par = '(' + lstm_layer_layout.split('(', 1)[1]
+        tupla_par = eval(tupla_par)
+        if len(tupla_par) == 4:
+            units, activation, kinit, binit = tupla_par
+            kinit = build_initializer(kinit)
+            binit = build_initializer(binit)
+        elif len(tupla_par) == 3:
+            units, activation, kinit = tupla_par
+            kinit = build_initializer(kinit)
+            binit = 'zeros'
+        elif len(tupla_par) == 2:
+            units, activation = tupla_par
+            kinit, binit ='glorot_uniform', 'zeros'
+        else:
+            raise Exception('Wrong lstm syntax for \'%s\'' % lstm_layer_layout)
+        lstm_layer = LSTM(
+            units=units,
+            activation=activation,
+            kernel_initializer=kinit,
+            bias_initializer=binit)
+    elif lstm_layer_layout.startswith('dropout'):
+        tupla_par = '(' + lstm_layer_layout.split('(', 1)[1]
+        tupla_par = eval(tupla_par)
+        if isinstance(tupla_par, float):
+            rate = tupla_par
+        else:
+            raise Exception('Wrong lstm syntax for \'%s\'' % lstm_layer_layout)
+        lstm_layer = Dropout(rate=rate)
+    else:
+        raise Exception('Unsupported lstm layer layout \'%s\'' % lstm_layer_layout)
+
+    return lstm_layer
 
 def build_cnn_layer(cnn_layer_layout):
     if cnn_layer_layout.startswith('conv'):
@@ -122,7 +157,11 @@ def build_dense_layer(dense_layer_layout):
 def build_model():
     inputs = Input(shape=(args.sample_length, 1))
 
-    cnn = inputs
+    lstm = inputs
+    for i in range(0, len(args.lstm_layers_layout)):
+        lstm = build_lstm_layer(args.lstm_layers_layout[i])(lstm)
+
+    cnn = lstm
     for i in range(0, len(args.cnn_layers_layout)):
         cnn = build_cnn_layer(args.cnn_layers_layout[i])(cnn)
 
@@ -171,7 +210,7 @@ class EpochLogger(tfcb.Callback):
             print ('\nSaved #{} snapshot model'.format(epoch, '09'))
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='%(prog)s builds a model to fit an univariate time series using a configurable CNN neural network')
+    parser = argparse.ArgumentParser(description='%(prog)s builds a model to fit an univariate time series using a configurable LSTM neural network')
 
     parser.add_argument('--version', action='version', version='%(prog)s 1.0.0')
 
@@ -214,11 +253,19 @@ if __name__ == "__main__":
                         default=50,
                         help='batch size')
 
+    parser.add_argument('--lstmlayers',
+                        type=str,
+                        nargs = '+',
+                        dest='lstm_layers_layout',
+                        required=True,
+                        help='lstm layer layout')
+
     parser.add_argument('--cnnlayers',
                         type=str,
                         nargs = '+',
                         dest='cnn_layers_layout',
-                        required=True,
+                        required=False,
+                        default=[],
                         help='cnn layer layout')
 
     parser.add_argument('--denselayers',
