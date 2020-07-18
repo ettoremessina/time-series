@@ -42,7 +42,7 @@ def build_samples(seq):
     is_there_lstm_layer = len(args.lstm_layers_layout) > 0
 
     if is_there_cnn_layer and is_there_lstm_layer:
-        X_train = X_train.reshape((X_train.shape[0], 2, args.sample_length // args.sub_sample_length, 1))
+        X_train = X_train.reshape((X_train.shape[0], args.sub_sample_length, args.sample_length // args.sub_sample_length, 1))
     elif is_there_cnn_layer or is_there_lstm_layer:
         X_train = X_train.reshape((X_train.shape[0], X_train.shape[1], 1))
     else:

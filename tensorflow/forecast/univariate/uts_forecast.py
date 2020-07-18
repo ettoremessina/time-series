@@ -130,7 +130,7 @@ if __name__ == "__main__":
     to_predict_flat = np.array(y_timeseries[-args.sample_length:])
     for i in range(args.forecast_length):
         if model_kind == 'cnn-lstm':
-            to_predict = to_predict_flat.reshape((1, 2, args.sample_length // args.sub_sample_length, 1))
+            to_predict = to_predict_flat.reshape((1, args.sub_sample_length, args.sample_length // args.sub_sample_length, 1))
         elif model_kind == 'mlp':
             to_predict = to_predict_flat.reshape((1, args.sample_length))
         elif model_kind == 'cnn' or model_kind == 'lstm':

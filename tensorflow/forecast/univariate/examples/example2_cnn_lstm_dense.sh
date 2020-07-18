@@ -1,8 +1,8 @@
 #!/bin/bash
-EXM=example1_cnn_lstm_dense
-SL=6
-SSL=2
-FT="2.0 * np.sin(t/10.0)"
+EXM=example2_cnn_lstm_dense
+SL=12
+SSL=3
+FT="2.0 * np.sin(t/5.0) / np.exp(t/80.0)"
 FL=200
 
 rm -rf dumps/${EXM}
@@ -13,13 +13,13 @@ rm -rf media/${EXM}_diagnostic
 python ../../../../common/uts_gen.py  \
      --tsout timeseries/${EXM}_train.csv \
      --funct "$FT" \
-     --rend 200
+     --rend 150
 
  python ../../../../common/uts_gen.py  \
      --tsout timeseries/${EXM}_actual.csv \
      --funct "$FT" \
-     --rbegin 200 \
-     --rend 400
+     --rbegin 150 \
+     --rend 350
 
 python ../uts_fit.py \
      --tstrain timeseries/${EXM}_train.csv \
@@ -28,19 +28,17 @@ python ../uts_fit.py \
      --modelout models/${EXM} \
      --cnnlayers "conv(128, 3, 'relu')" "maxpool(1)" \
      --lstmlayers "lstm(120, 'tanh')" \
-     --denselayers "dense(80, 'tanh')" \
+     --denselayers "dense(40, 'tanh')" \
      --epochs 120 \
-     --batchsize 40 \
-     --optimizer "Adam()" \
-     --loss "MeanSquaredError()"
-#     --cnnlayers "conv(64, 3, 'relu', 'RandomUniform(minval=-0.1, maxval=0.1)', 'Ones()')" "maxpool(2)" "conv(64, 2, 'tanh')" "maxpool (1)" \
-#     --denselayers "dense(80, 'tanh')" \
-#     --lstmlayers "lstm(120, 'tanh')" \
-#     --metrics "mean_absolute_error" "mean_squared_logarithmic_error" \
+     --batchsize 50 \
+     --optimizer "Adam(learning_rate=1e-3, epsilon=1e-07)" \
+     --loss "MeanSquaredError()" \
+     --metrics "mean_squared_error" \
+     --bestmodelmonitor "mean_squared_error"
 #     --dumpout dumps/${EXM} \
-#     --logsout logs/${EXM}
+#     --logsout logs/${EXM} \
 #     --modelsnapout snaps/${EXM} \
-#     --modelsnapfreq 10
+#     --modelsnapfreq 5
 
 python ../uts_forecast.py \
     --tstrain timeseries/${EXM}_train.csv \
@@ -57,21 +55,16 @@ python ../../../../common/uts_scatter.py \
     --tstrain timeseries/${EXM}_train.csv \
     --tsforecast forecasts/${EXM}_forecast.csv \
     --tsactual timeseries/${EXM}_actual.csv \
-    --title "Example #1 by CNN + LSTM + Dense" \
+    --title "Example #2 by CNN + LSTM + Dense" \
     --xlabel "t" \
     --ylabel "y"
 
 #python ../../common/uts_diagnostic.py --dump dumps/${EXM}
-#python ../../common/uts_diagnostic.py --dump dumps/${EXM} --savefigdir media/e${EXM}_diagnostic
+#python ../../common/uts_diagnostic.py --dump dumps/${EXM} --savefigdir media/${EXM}_diagnostic
 
 #python ../../common/uts_video.py \
 #  --modelsnap snaps/${EXM} \
 #  --tstrain timeseries/${EXM}_train.csv \
-#  --tsactual timeseries/${EXM}_actual.csv \
-#  --strategy walk_forward \
 #  --samplelength $SL \
-#  --fclength $FL \
-#  --savevideo media/${EXM}_video.gif \
-#  --title "Example #1 by MLP" \
-#  --xlabel "t" \
-#  --ylabel "y"
+#  --forecastlength $FL \
+#  --savevideo media/${EXM}_video.gif
