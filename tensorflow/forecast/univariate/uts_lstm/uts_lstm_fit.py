@@ -10,8 +10,8 @@ import tensorflow.keras.losses as tkl
 import tensorflow.keras.metrics as tkm
 import tensorflow.keras.callbacks as tfcb
 import tensorflow.keras.initializers as tfi
-from tensorflow.keras.layers import Input, Dense, Conv1D, MaxPooling1D, Dropout, Flatten, LSTM, concatenate
-from tensorflow.keras.models import Model
+import tensorflow.keras.layers as tfl
+import tensorflow.keras.models as tfm
 import pandas as pd
 
 def str2bool(v):
@@ -37,8 +37,64 @@ def build_samples(seq):
     aggregate.dropna(inplace=True)
 
     X_train, y_train = aggregate.values[:, :-1], aggregate.values[:, -1]
-    X_train = X_train.reshape((X_train.shape[0], X_train.shape[1], 1))
+
+    is_there_cnn_layer = len(args.cnn_layers_layout) > 0
+    is_there_lstm_layer = len(args.lstm_layers_layout) > 0
+
+    if is_there_cnn_layer and is_there_lstm_layer:
+        X_train = X_train.reshape((X_train.shape[0], 2, args.sample_length // 2, 1))
+    elif is_there_cnn_layer or is_there_lstm_layer:
+        X_train = X_train.reshape((X_train.shape[0], X_train.shape[1], 1))
+    else:
+        input_shape = (args.sample_length,)
+
     return X_train, y_train
+
+def build_cnn_layer(cnn_layer_layout, wrap_with_time_distributed):
+    if cnn_layer_layout.startswith('conv'):
+        tupla_par = '(' + cnn_layer_layout.split('(', 1)[1]
+        tupla_par = eval(tupla_par)
+        if len(tupla_par) == 5:
+            filters, kernel_size, activation, kinit, binit = tupla_par
+            kinit = build_initializer(kinit)
+            binit = build_initializer(binit)
+        elif len(tupla_par) == 4:
+            filters, kernel_size, activation, kinit = tupla_par
+            kinit = build_initializer(kinit)
+            binit = 'zeros'
+        elif len(tupla_par) == 3:
+            filters, kernel_size, activation = tupla_par
+            kinit, binit ='glorot_uniform', 'zeros'
+        else:
+            raise Exception('Wrong cnn syntax for \'%s\'' % cnn_layer_layout)
+        cnn_layer = tfl.Conv1D(
+            filters=filters,
+            kernel_size=kernel_size,
+            activation=activation,
+            kernel_initializer=kinit,
+            bias_initializer=binit)
+    elif cnn_layer_layout.startswith('maxpool'):
+        tupla_par = '(' + cnn_layer_layout.split('(', 1)[1]
+        tupla_par = eval(tupla_par)
+        if isinstance(tupla_par, int):
+            pool_size = tupla_par
+        else:
+            raise Exception('Wrong cnn syntax for \'%s\'' % cnn_layer_layout)
+        cnn_layer = tfl.MaxPooling1D(pool_size=pool_size)
+    elif cnn_layer_layout.startswith('dropout'):
+        tupla_par = '(' + cnn_layer_layout.split('(', 1)[1]
+        tupla_par = eval(tupla_par)
+        if isinstance(tupla_par, float):
+            rate = tupla_par
+        else:
+            raise Exception('Wrong cnn syntax for \'%s\'' % cnn_layer_layout)
+        cnn_layer = tfl.Dropout(rate=rate)
+    else:
+        raise Exception('Unsupported cnn layer layout \'%s\'' % cnn_layer_layout)
+
+    if wrap_with_time_distributed:
+        cnn_layer = tfl.TimeDistributed(cnn_layer)
+    return cnn_layer
 
 def build_lstm_layer(lstm_layer_layout):
     if lstm_layer_layout.startswith('lstm'):
@@ -57,7 +113,7 @@ def build_lstm_layer(lstm_layer_layout):
             kinit, binit ='glorot_uniform', 'zeros'
         else:
             raise Exception('Wrong lstm syntax for \'%s\'' % lstm_layer_layout)
-        lstm_layer = LSTM(
+        lstm_layer = tfl.LSTM(
             units=units,
             activation=activation,
             kernel_initializer=kinit,
@@ -69,55 +125,11 @@ def build_lstm_layer(lstm_layer_layout):
             rate = tupla_par
         else:
             raise Exception('Wrong lstm syntax for \'%s\'' % lstm_layer_layout)
-        lstm_layer = Dropout(rate=rate)
+        lstm_layer = tfl.Dropout(rate=rate)
     else:
         raise Exception('Unsupported lstm layer layout \'%s\'' % lstm_layer_layout)
 
     return lstm_layer
-
-def build_cnn_layer(cnn_layer_layout):
-    if cnn_layer_layout.startswith('conv'):
-        tupla_par = '(' + cnn_layer_layout.split('(', 1)[1]
-        tupla_par = eval(tupla_par)
-        if len(tupla_par) == 5:
-            filters, kernel_size, activation, kinit, binit = tupla_par
-            kinit = build_initializer(kinit)
-            binit = build_initializer(binit)
-        elif len(tupla_par) == 4:
-            filters, kernel_size, activation, kinit = tupla_par
-            kinit = build_initializer(kinit)
-            binit = 'zeros'
-        elif len(tupla_par) == 3:
-            filters, kernel_size, activation = tupla_par
-            kinit, binit ='glorot_uniform', 'zeros'
-        else:
-            raise Exception('Wrong cnn syntax for \'%s\'' % cnn_layer_layout)
-        cnn_layer = Conv1D(
-            filters=filters,
-            kernel_size=kernel_size,
-            activation=activation,
-            kernel_initializer=kinit,
-            bias_initializer=binit)
-    elif cnn_layer_layout.startswith('maxpool'):
-        tupla_par = '(' + cnn_layer_layout.split('(', 1)[1]
-        tupla_par = eval(tupla_par)
-        if isinstance(tupla_par, int):
-            pool_size = tupla_par
-        else:
-            raise Exception('Wrong cnn syntax for \'%s\'' % cnn_layer_layout)
-        cnn_layer = MaxPooling1D(pool_size=pool_size)
-    elif cnn_layer_layout.startswith('dropout'):
-        tupla_par = '(' + cnn_layer_layout.split('(', 1)[1]
-        tupla_par = eval(tupla_par)
-        if isinstance(tupla_par, float):
-            rate = tupla_par
-        else:
-            raise Exception('Wrong cnn syntax for \'%s\'' % cnn_layer_layout)
-        cnn_layer = Dropout(rate=rate)
-    else:
-        raise Exception('Unsupported cnn layer layout \'%s\'' % cnn_layer_layout)
-
-    return cnn_layer
 
 def build_dense_layer(dense_layer_layout):
     if dense_layer_layout.startswith('dense'):
@@ -136,7 +148,7 @@ def build_dense_layer(dense_layer_layout):
             kinit, binit ='glorot_uniform', 'zeros'
         else:
             raise Exception('Wrong dense syntax for \'%s\'' % dense_layer_layout)
-        dense_layer = Dense(
+        dense_layer = tfl.Dense(
             units=units,
             activation=activation,
             kernel_initializer=kinit,
@@ -148,30 +160,43 @@ def build_dense_layer(dense_layer_layout):
             rate = tupla_par
         else:
             raise Exception('Wrong dense syntax for \'%s\'' % dense_layer_layout)
-        dense_layer = Dropout(rate=rate)
+        dense_layer = tfl.Dropout(rate=rate)
     else:
         raise Exception('Unsupported dense layer layout \'%s\'' % dense_layer_layout)
 
     return dense_layer
 
 def build_model():
-    inputs = Input(shape=(args.sample_length, 1))
+    is_there_cnn_layer = len(args.cnn_layers_layout) > 0
+    is_there_lstm_layer = len(args.lstm_layers_layout) > 0
 
-    lstm = inputs
-    for i in range(0, len(args.lstm_layers_layout)):
-        lstm = build_lstm_layer(args.lstm_layers_layout[i])(lstm)
+    if is_there_cnn_layer and is_there_lstm_layer:
+        input_shape = (None, args.sample_length // 2, 1)
+    elif is_there_cnn_layer or is_there_lstm_layer:
+        input_shape = (args.sample_length, 1)
+    else:
+        input_shape = (args.sample_length,)
 
-    cnn = lstm
+    inputs = tfl.Input(shape=input_shape)
+
+    hidden = inputs
     for i in range(0, len(args.cnn_layers_layout)):
-        cnn = build_cnn_layer(args.cnn_layers_layout[i])(cnn)
+        hidden = build_cnn_layer(args.cnn_layers_layout[i], is_there_lstm_layer)(hidden)
 
-    dense = Flatten()(cnn)
+    if is_there_cnn_layer:
+        if is_there_lstm_layer:
+            hidden = tfl.TimeDistributed(tfl.Flatten())(hidden)
+        else:
+            hidden = tfl.Flatten()(hidden)
+
+    for i in range(0, len(args.lstm_layers_layout)):
+        hidden = build_lstm_layer(args.lstm_layers_layout[i])(hidden)
 
     for i in range(0, len(args.dense_layers_layout)):
-        dense = build_dense_layer(args.dense_layers_layout[i])(dense)
+        hidden = build_dense_layer(args.dense_layers_layout[i])(hidden)
 
-    outputs = Dense(1)(dense)
-    model = Model(inputs=inputs, outputs=outputs)
+    outputs = tfl.Dense(1)(hidden)
+    model = tfm.Model(inputs=inputs, outputs=outputs)
     return model
 
 def build_initializer(init):
@@ -253,13 +278,6 @@ if __name__ == "__main__":
                         default=50,
                         help='batch size')
 
-    parser.add_argument('--lstmlayers',
-                        type=str,
-                        nargs = '+',
-                        dest='lstm_layers_layout',
-                        required=True,
-                        help='lstm layer layout')
-
     parser.add_argument('--cnnlayers',
                         type=str,
                         nargs = '+',
@@ -267,6 +285,14 @@ if __name__ == "__main__":
                         required=False,
                         default=[],
                         help='cnn layer layout')
+
+    parser.add_argument('--lstmlayers',
+                        type=str,
+                        nargs = '+',
+                        dest='lstm_layers_layout',
+                        required=False,
+                        default=[],
+                        help='lstm layer layout')
 
     parser.add_argument('--denselayers',
                         type=str,

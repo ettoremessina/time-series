@@ -42,7 +42,6 @@ python ../../common/uts_forecast.py \
     --samplelength $SL \
     --fclength $FL \
     --model models/example2 \
-    --modelkind mlp \
     --fcout forecasts/example2_forecast.csv \
     --error "MeanSquaredError()"
 

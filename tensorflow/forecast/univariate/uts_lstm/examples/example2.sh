@@ -19,11 +19,12 @@ python ../../../../../common/uts_gen.py  \
      --rbegin 200 \
      --rend 400
 
-python ../uts_cnn_fit.py \
+python ../uts_lstm_fit.py \
      --tstrain timeseries/example2_train.csv \
      --samplelength $SL \
      --modelout models/example2 \
      --cnnlayers "conv(128, 3, 'relu')" "maxpool(1)" \
+     --lstmlayers "lstm(120, 'tanh')" \
      --epochs 120 \
      --batchsize 50 \
      --optimizer "Adam(learning_rate=1e-3, epsilon=1e-07)" \
@@ -41,7 +42,6 @@ python ../../common/uts_forecast.py \
     --samplelength $SL \
     --fclength $FL \
     --model models/example2 \
-    --modelkind mlp \
     --fcout forecasts/example2_forecast.csv \
     --error "MeanSquaredError()"
 

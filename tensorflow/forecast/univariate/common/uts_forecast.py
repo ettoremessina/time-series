@@ -6,6 +6,7 @@ import numpy as np
 import tensorflow as tf
 import tensorflow.keras.models as tfm
 import tensorflow.keras.losses as tkl
+import tensorflow.keras.layers as tfl
 
 def read_timeseries(tsfilename):
     y_values = []
@@ -38,13 +39,6 @@ if __name__ == "__main__":
                         dest='model_path',
                         required=True,
                         help='model path')
-
-    parser.add_argument('--modelkind',
-                        type=str,
-                        dest='model_kind',
-                        required=True,
-                        choices=['mlp', 'cnn'],
-                        help='recursive uses previous predictions as input for future predictions, walk_forward uses actual as input (default: %(default)s)')
 
     parser.add_argument('--tstrain',
                         type=str,
@@ -110,14 +104,29 @@ if __name__ == "__main__":
             raise Exception('actual time series length is not enough: it must be at least equals to forecast length')
 
     model = tfm.load_model(args.model_path)
-    start_time = time.time()
+    if (len(model.layers) < 3):
+            raise Exception('invalid model: a model for this program must have at least 3 layers')
 
+    if isinstance(model.layers[1], tfl.TimeDistributed):
+        model_kind = 'cnn-lstm'
+    elif isinstance(model.layers[1], tfl.LSTM):
+        model_kind = 'lstm'
+    elif isinstance(model.layers[1], tfl.Conv1D):
+        model_kind = 'cnn'
+    elif isinstance(model.layers[1], tfl.Dense):
+        model_kind = 'mlp'
+    else:
+        raise Exception('unsupported kind of model: the 2nd layer for this program can be only LSTM, CNN or DENSE')
+
+    start_time = time.time()
     y_forecast = np.array([])
     to_predict_flat = np.array(y_timeseries[-args.sample_length:])
     for i in range(args.forecast_length):
-        if args.model_kind == 'mlp':
+        if model_kind == 'cnn-lstm':
+            to_predict = to_predict_flat.reshape((1, 2, args.sample_length // 2, 1))
+        elif model_kind == 'mlp':
             to_predict = to_predict_flat.reshape((1, args.sample_length))
-        elif args.model_kind == 'cnn':
+        elif model_kind == 'cnn' or model_kind == 'lstm':
             to_predict = to_predict_flat.reshape((1, args.sample_length, 1))
         prediction = model.predict(to_predict, verbose=1)[0]
         y_forecast = np.append(y_forecast, prediction)

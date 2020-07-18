@@ -43,7 +43,6 @@ python ../../common/uts_forecast.py \
     --samplelength $SL \
     --fclength $FL \
     --model models/example1 \
-    --modelkind cnn \
     --fcout forecasts/example1_forecast.csv \
     --error "MeanSquaredError()"
 
