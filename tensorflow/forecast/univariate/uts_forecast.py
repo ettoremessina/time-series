@@ -67,6 +67,13 @@ if __name__ == "__main__":
                         default=5,
                         help='sample length')
 
+    parser.add_argument('--subsamplelength',
+                        type=int,
+                        dest='sub_sample_length',
+                        required=False,
+                        default=1,
+                        help='sub sample length (used when both cnn and lstm layers are present in the model, otherwise ignored)')
+
     parser.add_argument('--fclength',
                         type=int,
                         dest='forecast_length',
@@ -123,12 +130,12 @@ if __name__ == "__main__":
     to_predict_flat = np.array(y_timeseries[-args.sample_length:])
     for i in range(args.forecast_length):
         if model_kind == 'cnn-lstm':
-            to_predict = to_predict_flat.reshape((1, 2, args.sample_length // 2, 1))
+            to_predict = to_predict_flat.reshape((1, 2, args.sample_length // args.sub_sample_length, 1))
         elif model_kind == 'mlp':
             to_predict = to_predict_flat.reshape((1, args.sample_length))
         elif model_kind == 'cnn' or model_kind == 'lstm':
             to_predict = to_predict_flat.reshape((1, args.sample_length, 1))
-        prediction = model.predict(to_predict, verbose=1)[0]
+        prediction = model.predict(to_predict, verbose=0)[0]
         y_forecast = np.append(y_forecast, prediction)
         to_predict_flat = np.delete(to_predict_flat, 0)
         if args.strategy == 'walk_forward':
@@ -145,6 +152,6 @@ if __name__ == "__main__":
     if args.error != None:
         error_func = build_error()
         error_value = error_func(y_actual[:args.forecast_length], y_forecast)
-        print('>>>> \'%s\' value: %f' % (error_func.name, error_value))
+        print('\'%s\' value: %f' % (error_func.name, error_value))
 
     print("#### Terminated %s ####" % os.path.basename(__file__));
