@@ -38,10 +38,13 @@ def build_samples(seq):
 
     X_train, y_train = aggregate.values[:, :-1], aggregate.values[:, -1]
 
+    is_there_convlstm_layer = len(args.convlstm_layers_layout) > 0
     is_there_cnn_layer = len(args.cnn_layers_layout) > 0
     is_there_lstm_layer = len(args.lstm_layers_layout) > 0
 
-    if is_there_cnn_layer and is_there_lstm_layer:
+    if is_there_convlstm_layer:
+        X_train = X_train.reshape((X_train.shape[0], args.sub_sample_length, 1, args.sample_length // args.sub_sample_length, 1))
+    elif is_there_cnn_layer and is_there_lstm_layer:
         X_train = X_train.reshape((X_train.shape[0], args.sub_sample_length, args.sample_length // args.sub_sample_length, 1))
     elif is_there_cnn_layer or is_there_lstm_layer:
         X_train = X_train.reshape((X_train.shape[0], X_train.shape[1], 1))
@@ -49,6 +52,42 @@ def build_samples(seq):
         input_shape = (args.sample_length,)
 
     return X_train, y_train
+
+def build_convlstm_layer(convlstm_layer_layout):
+    if convlstm_layer_layout.startswith('convlstm'):
+        tupla_par = '(' + convlstm_layer_layout.split('(', 1)[1]
+        tupla_par = eval(tupla_par)
+        if len(tupla_par) == 5:
+            filters, kernel_size, activation, kinit, binit = tupla_par
+            kinit = build_initializer(kinit)
+            binit = build_initializer(binit)
+        elif len(tupla_par) == 4:
+            filters, kernel_size, activation, kinit = tupla_par
+            kinit = build_initializer(kinit)
+            binit = 'zeros'
+        elif len(tupla_par) == 3:
+            filters, kernel_size, activation = tupla_par
+            kinit, binit ='glorot_uniform', 'zeros'
+        else:
+            raise Exception('Wrong convlstm syntax for \'%s\'' % convlstm_layer_layout)
+        convlstm_layer = tfl.ConvLSTM2D(
+            filters=filters,
+            kernel_size=(1, kernel_size),
+            activation=activation,
+            kernel_initializer=kinit,
+            bias_initializer=binit)
+    elif convlstm_layer_layout.startswith('dropout'):
+        tupla_par = '(' + convlstm_layer_layout.split('(', 1)[1]
+        tupla_par = eval(tupla_par)
+        if isinstance(tupla_par, float):
+            rate = tupla_par
+        else:
+            raise Exception('Wrong convlstm syntax for \'%s\'' % convlstm_layer_layout)
+        convlstm_layer = tfl.Dropout(rate=rate)
+    else:
+        raise Exception('Unsupported convlstm layer layout \'%s\'' % convlstm_layer_layout)
+
+    return convlstm_layer
 
 def build_cnn_layer(cnn_layer_layout, wrap_with_time_distributed):
     if cnn_layer_layout.startswith('conv'):
@@ -167,10 +206,13 @@ def build_dense_layer(dense_layer_layout):
     return dense_layer
 
 def build_model():
+    is_there_convlstm_layer = len(args.convlstm_layers_layout) > 0
     is_there_cnn_layer = len(args.cnn_layers_layout) > 0
     is_there_lstm_layer = len(args.lstm_layers_layout) > 0
 
-    if is_there_cnn_layer and is_there_lstm_layer:
+    if is_there_convlstm_layer:
+        input_shape = (args.sub_sample_length, 1, args.sample_length // args.sub_sample_length, 1)
+    elif is_there_cnn_layer and is_there_lstm_layer:
         input_shape = (None, args.sample_length // args.sub_sample_length, 1)
     elif is_there_cnn_layer or is_there_lstm_layer:
         input_shape = (args.sample_length, 1)
@@ -178,12 +220,17 @@ def build_model():
         input_shape = (args.sample_length,)
 
     inputs = tfl.Input(shape=input_shape)
-
     hidden = inputs
+
+    for i in range(0, len(args.convlstm_layers_layout)):
+        hidden = build_convlstm_layer(args.convlstm_layers_layout[i])(hidden)
+
     for i in range(0, len(args.cnn_layers_layout)):
         hidden = build_cnn_layer(args.cnn_layers_layout[i], is_there_lstm_layer)(hidden)
 
-    if is_there_cnn_layer:
+    if is_there_convlstm_layer:
+        hidden = tfl.Flatten()(hidden)
+    elif is_there_cnn_layer:
         if is_there_lstm_layer:
             hidden = tfl.TimeDistributed(tfl.Flatten())(hidden)
         else:
@@ -291,7 +338,7 @@ if __name__ == "__main__":
                         dest='cnn_layers_layout',
                         required=False,
                         default=[],
-                        help='cnn layer layout')
+                        help='CNN layer layout')
 
     parser.add_argument('--lstmlayers',
                         type=str,
@@ -299,7 +346,16 @@ if __name__ == "__main__":
                         dest='lstm_layers_layout',
                         required=False,
                         default=[],
-                        help='lstm layer layout')
+                        help='LSTM layer layout')
+
+    parser.add_argument('--convlstmlayers',
+                        type=str,
+                        nargs = '+',
+                        dest='convlstm_layers_layout',
+                        required=False,
+                        default=[],
+                        help='ConvLSTM layer layout')
+
 
     parser.add_argument('--denselayers',
                         type=str,

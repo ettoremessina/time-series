@@ -114,7 +114,9 @@ if __name__ == "__main__":
     if (len(model.layers) < 3):
             raise Exception('invalid model: a model for this program must have at least 3 layers')
 
-    if isinstance(model.layers[1], tfl.TimeDistributed):
+    if type(model.layers[1]).__name__ == 'ConvLSTM2D': #workaround for a TF issue
+        model_kind = 'convlstm'
+    elif isinstance(model.layers[1], tfl.TimeDistributed):
         model_kind = 'cnn-lstm'
     elif isinstance(model.layers[1], tfl.LSTM):
         model_kind = 'lstm'
@@ -123,13 +125,15 @@ if __name__ == "__main__":
     elif isinstance(model.layers[1], tfl.Dense):
         model_kind = 'mlp'
     else:
-        raise Exception('unsupported kind of model: the 2nd layer for this program can be only LSTM, CNN or DENSE')
+        raise Exception('unsupported kind of model: the 2nd layer for this program can be only ConvLSTM, LSTM, CNN or DENSE')
 
     start_time = time.time()
     y_forecast = np.array([])
     to_predict_flat = np.array(y_timeseries[-args.sample_length:])
     for i in range(args.forecast_length):
-        if model_kind == 'cnn-lstm':
+        if model_kind == 'convlstm':
+            to_predict = to_predict_flat.reshape((1, args.sub_sample_length, 1, args.sample_length // args.sub_sample_length, 1))
+        elif model_kind == 'cnn-lstm':
             to_predict = to_predict_flat.reshape((1, args.sub_sample_length, args.sample_length // args.sub_sample_length, 1))
         elif model_kind == 'mlp':
             to_predict = to_predict_flat.reshape((1, args.sample_length))
