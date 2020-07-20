@@ -123,9 +123,11 @@ if __name__ == "__main__":
     elif isinstance(model.layers[1], tfl.Conv1D):
         model_kind = 'cnn'
     elif isinstance(model.layers[1], tfl.Dense):
-        model_kind = 'mlp'
+        model_kind = 'dense'
     else:
         raise Exception('unsupported kind of model: the 2nd layer for this program can be only ConvLSTM, LSTM, CNN or DENSE')
+
+    print ('Kind of network: %s' % model_kind)
 
     start_time = time.time()
     y_forecast = np.array([])
@@ -135,10 +137,10 @@ if __name__ == "__main__":
             to_predict = to_predict_flat.reshape((1, args.sub_sample_length, 1, args.sample_length // args.sub_sample_length, 1))
         elif model_kind == 'cnn-lstm':
             to_predict = to_predict_flat.reshape((1, args.sub_sample_length, args.sample_length // args.sub_sample_length, 1))
-        elif model_kind == 'mlp':
-            to_predict = to_predict_flat.reshape((1, args.sample_length))
         elif model_kind == 'cnn' or model_kind == 'lstm':
             to_predict = to_predict_flat.reshape((1, args.sample_length, 1))
+        elif model_kind == 'dense':
+            to_predict = to_predict_flat.reshape((1, args.sample_length))
         prediction = model.predict(to_predict, verbose=0)[0]
         y_forecast = np.append(y_forecast, prediction)
         to_predict_flat = np.delete(to_predict_flat, 0)

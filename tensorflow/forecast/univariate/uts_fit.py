@@ -24,6 +24,18 @@ def str2bool(v):
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
+def is_there_convlstm_layer():
+    return len(args.convlstm_layers_layout) > 0
+
+def is_there_cnn_layer():
+    return len(args.cnn_layers_layout) > 0
+
+def is_there_lstm_layer():
+    return len(args.lstm_layers_layout) > 0
+
+def is_there_dense_layer():
+    return len(args.dense_layers_layout) > 0
+
 def build_samples(seq):
     df = pd.DataFrame(seq)
     cols = list()
@@ -38,15 +50,11 @@ def build_samples(seq):
 
     X_train, y_train = aggregate.values[:, :-1], aggregate.values[:, -1]
 
-    is_there_convlstm_layer = len(args.convlstm_layers_layout) > 0
-    is_there_cnn_layer = len(args.cnn_layers_layout) > 0
-    is_there_lstm_layer = len(args.lstm_layers_layout) > 0
-
-    if is_there_convlstm_layer:
+    if is_there_convlstm_layer():
         X_train = X_train.reshape((X_train.shape[0], args.sub_sample_length, 1, args.sample_length // args.sub_sample_length, 1))
-    elif is_there_cnn_layer and is_there_lstm_layer:
+    elif is_there_cnn_layer() and is_there_lstm_layer():
         X_train = X_train.reshape((X_train.shape[0], args.sub_sample_length, args.sample_length // args.sub_sample_length, 1))
-    elif is_there_cnn_layer or is_there_lstm_layer:
+    elif is_there_cnn_layer() or is_there_lstm_layer():
         X_train = X_train.reshape((X_train.shape[0], X_train.shape[1], 1))
     else:
         input_shape = (args.sample_length,)
@@ -206,15 +214,11 @@ def build_dense_layer(dense_layer_layout):
     return dense_layer
 
 def build_model():
-    is_there_convlstm_layer = len(args.convlstm_layers_layout) > 0
-    is_there_cnn_layer = len(args.cnn_layers_layout) > 0
-    is_there_lstm_layer = len(args.lstm_layers_layout) > 0
-
-    if is_there_convlstm_layer:
+    if is_there_convlstm_layer():
         input_shape = (args.sub_sample_length, 1, args.sample_length // args.sub_sample_length, 1)
-    elif is_there_cnn_layer and is_there_lstm_layer:
+    elif is_there_cnn_layer() and is_there_lstm_layer():
         input_shape = (None, args.sample_length // args.sub_sample_length, 1)
-    elif is_there_cnn_layer or is_there_lstm_layer:
+    elif is_there_cnn_layer() or is_there_lstm_layer():
         input_shape = (args.sample_length, 1)
     else:
         input_shape = (args.sample_length,)
@@ -226,12 +230,12 @@ def build_model():
         hidden = build_convlstm_layer(args.convlstm_layers_layout[i])(hidden)
 
     for i in range(0, len(args.cnn_layers_layout)):
-        hidden = build_cnn_layer(args.cnn_layers_layout[i], is_there_lstm_layer)(hidden)
+        hidden = build_cnn_layer(args.cnn_layers_layout[i], is_there_lstm_layer())(hidden)
 
-    if is_there_convlstm_layer:
+    if is_there_convlstm_layer():
         hidden = tfl.Flatten()(hidden)
-    elif is_there_cnn_layer:
-        if is_there_lstm_layer:
+    elif is_there_cnn_layer():
+        if is_there_lstm_layer():
             hidden = tfl.TimeDistributed(tfl.Flatten())(hidden)
         else:
             hidden = tfl.Flatten()(hidden)
@@ -275,6 +279,19 @@ def read_timeseries(tsfilename):
             y_values.append(float(row[0]))
     return y_values
 
+def validate_arguments():
+    if not (is_there_convlstm_layer() or is_there_cnn_layer() or is_there_lstm_layer() or is_there_dense_layer()):
+        raise Exception('at least one argument among --convlstmlayers, --cnnlayers, --lstmlayers or --denselayers must be supplied')
+
+    if is_there_convlstm_layer() and (is_there_cnn_layer() or is_there_lstm_layer()):
+        raise Exception('argument --convlstmlayers is incompatible with --cnnlayers and --lstmlayers')
+
+    if is_there_convlstm_layer() or (is_there_cnn_layer() and is_there_lstm_layer()):
+        if args.sub_sample_length == 0:
+            raise Exception('argument --subsamplelength must be supplied for ConvLSTM network or for CNN-LSTM network')
+        if args.sample_length % args.sub_sample_length != 0:
+            raise Exception('argument --subsamplelength must be a divisor of --samplelength')
+
 class EpochLogger(tfcb.Callback):
     def on_epoch_end(self, epoch, logs=None):
         if  (epoch % args.model_snapshots_freq == 0) or ((epoch + 1) == args.epochs):
@@ -309,7 +326,7 @@ if __name__ == "__main__":
                         type=int,
                         dest='sub_sample_length',
                         required=False,
-                        default=1,
+                        default=0,
                         help='sub sample length (used when both cnn and lstm layers are present in the model, otherwise ignored)')
 
     parser.add_argument('--bestmodelmonitor',
@@ -332,6 +349,14 @@ if __name__ == "__main__":
                         default=50,
                         help='batch size')
 
+    parser.add_argument('--convlstmlayers',
+                        type=str,
+                        nargs = '+',
+                        dest='convlstm_layers_layout',
+                        required=False,
+                        default=[],
+                        help='ConvLSTM layer layout')
+
     parser.add_argument('--cnnlayers',
                         type=str,
                         nargs = '+',
@@ -347,15 +372,6 @@ if __name__ == "__main__":
                         required=False,
                         default=[],
                         help='LSTM layer layout')
-
-    parser.add_argument('--convlstmlayers',
-                        type=str,
-                        nargs = '+',
-                        dest='convlstm_layers_layout',
-                        required=False,
-                        default=[],
-                        help='ConvLSTM layer layout')
-
 
     parser.add_argument('--denselayers',
                         type=str,
@@ -415,6 +431,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     print("#### Started %s ####" % os.path.basename(__file__));
+
+    validate_arguments()
 
     sequence = read_timeseries(args.train_timeseries_filename)
     X_train, y_train = build_samples(sequence)
