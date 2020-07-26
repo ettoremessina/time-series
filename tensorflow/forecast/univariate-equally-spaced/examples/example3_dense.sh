@@ -9,18 +9,18 @@ rm -rf logs/${EXM}
 rm -rf snaps/${EXM}
 rm -rf media/${EXM}_diagnostic
 
-python ../../../../common/uts_gen.py  \
+python ../../../../common/uvests_gen.py  \
      --tsout timeseries/${EXM}_train.csv \
      --funct "$FT" \
-     --rend 200
+     --tend 200
 
- python ../../../../common/uts_gen.py  \
+python ../../../../common/uvests_gen.py  \
      --tsout timeseries/${EXM}_actual.csv \
      --funct "$FT" \
-     --rbegin 200 \
-     --rend 400
+     --tbegin 200 \
+     --tend 400
 
-python ../uts_fit.py \
+python ../uvests_fit.py \
      --tstrain timeseries/${EXM}_train.csv \
      --samplelength $SL \
      --modelout models/${EXM} \
@@ -37,7 +37,7 @@ python ../uts_fit.py \
 #     --modelsnapout snaps/${EXM} \
 #     --modelsnapfreq 10
 
-python ../uts_forecast.py \
+python ../uvests_forecast.py \
     --tstrain timeseries/${EXM}_train.csv \
     --tsactual timeseries/${EXM}_actual.csv \
     --strategy recursive \
@@ -47,7 +47,7 @@ python ../uts_forecast.py \
     --fcout forecasts/${EXM}_forecast.csv \
     --error "MeanAbsoluteError()"
 
-python ../../../../common/uts_scatter.py \
+python ../../../../common/uvests_scatter.py \
     --tstrain timeseries/${EXM}_train.csv \
     --tsforecast forecasts/${EXM}_forecast.csv \
     --tsactual timeseries/${EXM}_actual.csv \
@@ -55,10 +55,10 @@ python ../../../../common/uts_scatter.py \
     --xlabel "t" \
     --ylabel "y"
 
-#python ../../common/uts_diagnostic.py --dump dumps/${EXM}
-#python ../../common/uts_diagnostic.py --dump dumps/${EXM} --savefigdir media/e${EXM}_diagnostic
+#python ../../common/uvests_diagnostic.py --dump dumps/${EXM}
+#python ../../common/uvests_diagnostic.py --dump dumps/${EXM} --savefigdir media/e${EXM}_diagnostic
 
-#python ../../common/uts_video.py \
+#python ../../common/uvests_video.py \
 #  --modelsnap snaps/${EXM} \
 #  --tstrain timeseries/${EXM}_train.csv \
 #  --tsactual timeseries/${EXM}_actual.csv \

@@ -20,26 +20,26 @@ if __name__ == "__main__":
                         required=True,
                         help='func(t) body (lamba format)')
 
-    parser.add_argument('--rbegin',
+    parser.add_argument('--tbegin',
                         type=float,
-                        dest='range_begin',
+                        dest='time_begin',
                         required=False,
                         default=0.0,
-                        help='begin range (default:0)')
+                        help='time begin (default:0)')
 
-    parser.add_argument('--rend',
+    parser.add_argument('--tend',
                         type=float,
-                        dest='range_end',
+                        dest='time_end',
                         required=False,
                         default=+100.0,
-                        help='end range (default:100)')
+                        help='time end (default:100)')
 
-    parser.add_argument('--rstep',
+    parser.add_argument('--tstep',
                         type=float,
-                        dest='range_step',
+                        dest='time_step',
                         required=False,
                         default=1.0,
-                        help='step range (default: 1.0)')
+                        help='time step (default: 1.0)')
 
     parser.add_argument('--noise',
                         type=str,
@@ -51,7 +51,7 @@ if __name__ == "__main__":
 
     print("#### Started %s ####" % os.path.basename(__file__));
 
-    t_values = np.arange(args.range_begin, args.range_end, args.range_step, dtype=float)
+    t_values = np.arange(args.time_begin, args.time_end, args.time_step, dtype=float)
     func_t = eval('lambda t: ' + args.func_t_body)
 
     if args.noise_body:
