@@ -33,8 +33,8 @@ python ../fc_uvests_fit.py \
      --batchsize 50 \
      --optimizer "Adam(learning_rate=1e-3, epsilon=1e-07)" \
      --loss "MeanSquaredError()" \
-     --metrics "mean_squared_error" \
-     --bestmodelmonitor "mean_squared_error"
+     --metrics "mean_squared_error"
+#     --bestmodelmonitor "mean_squared_error"
 #     --dumpout dumps/${EXM} \
 #     --logsout logs/${EXM} \
 #     --modelsnapout snaps/${EXM} \
