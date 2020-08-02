@@ -143,7 +143,7 @@ def build_cnn_layer(cnn_layer_layout, wrap_with_time_distributed):
         cnn_layer = tfl.TimeDistributed(cnn_layer)
     return cnn_layer
 
-def build_lstm_layer(lstm_layer_layout):
+def build_lstm_layer(lstm_layer_layout, is_last_lstm_layer):
     if lstm_layer_layout.startswith('lstm'):
         tupla_par = '(' + lstm_layer_layout.split('(', 1)[1]
         tupla_par = eval(tupla_par)
@@ -164,7 +164,10 @@ def build_lstm_layer(lstm_layer_layout):
             units=units,
             activation=activation,
             kernel_initializer=kinit,
-            bias_initializer=binit)
+            bias_initializer=binit,
+            return_sequences=not is_last_lstm_layer)
+        if lstm_layer_layout.startswith('lstmbi'):
+            lstm_layer = tfl.Bidirectional(lstm_layer)
     elif lstm_layer_layout.startswith('dropout'):
         tupla_par = '(' + lstm_layer_layout.split('(', 1)[1]
         tupla_par = eval(tupla_par)
@@ -241,7 +244,8 @@ def build_model():
             hidden = tfl.Flatten()(hidden)
 
     for i in range(0, len(args.lstm_layers_layout)):
-        hidden = build_lstm_layer(args.lstm_layers_layout[i])(hidden)
+        is_last_lstm_layer = next((lll for lll in args.lstm_layers_layout[i+1:] if lll.startswith('lstm')), None) == None
+        hidden = build_lstm_layer(args.lstm_layers_layout[i], is_last_lstm_layer)(hidden)
 
     for i in range(0, len(args.dense_layers_layout)):
         hidden = build_dense_layer(args.dense_layers_layout[i])(hidden)

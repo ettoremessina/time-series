@@ -24,7 +24,7 @@ python ../../../../common/uvests_gen.py  \
      --tend 400 \
      --tstep 0.5
 
-python ../uvests_fit.py \
+python ../fc_uvests_fit.py \
      --tstrain timeseries/${EXM}_train.csv \
      --samplelength $SL \
      --subsamplelength $SSL \
@@ -36,16 +36,13 @@ python ../uvests_fit.py \
      --batchsize 40 \
      --optimizer "Adam()" \
      --loss "MeanSquaredError()"
-#     --cnnlayers "conv(64, 3, 'relu', 'RandomUniform(minval=-0.1, maxval=0.1)', 'Ones()')" "maxpool(2)" "conv(64, 2, 'tanh')" "maxpool (1)" \
-#     --denselayers "dense(80, 'tanh')" \
-#     --lstmlayers "lstm(120, 'tanh')" \
 #     --metrics "mean_absolute_error" "mean_squared_logarithmic_error" \
 #     --dumpout dumps/${EXM} \
 #     --logsout logs/${EXM}
 #     --modelsnapout snaps/${EXM} \
 #     --modelsnapfreq 10
 
-python ../uvests_forecast.py \
+python ../fc_uvests_predict.py \
     --tstrain timeseries/${EXM}_train.csv \
     --tsactual timeseries/${EXM}_actual.csv \
     --strategy recursive \
@@ -64,10 +61,10 @@ python ../../../../common/uvests_scatter.py \
     --xlabel "t" \
     --ylabel "y"
 
-#python ../../common/uvests_diagnostic.py --dump dumps/${EXM}
-#python ../../common/uvests_diagnostic.py --dump dumps/${EXM} --savefigdir media/e${EXM}_diagnostic
+#python ../fc_uvests_diagnostic.py --dump dumps/${EXM}
+#python ../fc_uvests_diagnostic.py --dump dumps/${EXM} --savefigdir media/e${EXM}_diagnostic
 
-#python ../../common/uvests_video.py \
+#python ../fc_uvests_video.py \
 #  --modelsnap snaps/${EXM} \
 #  --tstrain timeseries/${EXM}_train.csv \
 #  --tsactual timeseries/${EXM}_actual.csv \
@@ -75,6 +72,6 @@ python ../../../../common/uvests_scatter.py \
 #  --samplelength $SL \
 #  --fclength $FL \
 #  --savevideo media/${EXM}_video.gif \
-#  --title "Example #1 by MLP" \
+#  --title "Example #1 by CNN + LSTM + Dense" \
 #  --xlabel "t" \
 #  --ylabel "y"

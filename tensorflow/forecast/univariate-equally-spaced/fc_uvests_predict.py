@@ -118,7 +118,7 @@ if __name__ == "__main__":
         model_kind = 'convlstm'
     elif isinstance(model.layers[1], tfl.TimeDistributed):
         model_kind = 'cnn-lstm'
-    elif isinstance(model.layers[1], tfl.LSTM):
+    elif isinstance(model.layers[1], tfl.LSTM) or isinstance(model.layers[1], tfl.Bidirectional):
         model_kind = 'lstm'
     elif isinstance(model.layers[1], tfl.Conv1D):
         model_kind = 'cnn'

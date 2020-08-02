@@ -21,7 +21,7 @@ python ../../../../common/uvests_gen.py  \
      --tbegin 150 \
      --tend 350
 
-python ../uvests_fit.py \
+python ../fc_uvests_fit.py \
      --tstrain timeseries/${EXM}_train.csv \
      --samplelength $SL \
      --subsamplelength $SSL \
@@ -40,7 +40,7 @@ python ../uvests_fit.py \
 #     --modelsnapout snaps/${EXM} \
 #     --modelsnapfreq 5
 
-python ../uvests_forecast.py \
+python ../fc_uvests_predict.py \
     --tstrain timeseries/${EXM}_train.csv \
     --tsactual timeseries/${EXM}_actual.csv \
     --strategy recursive \
@@ -59,12 +59,15 @@ python ../../../../common/uvests_scatter.py \
     --xlabel "t" \
     --ylabel "y"
 
-#python ../../common/uvests_diagnostic.py --dump dumps/${EXM}
-#python ../../common/uvests_diagnostic.py --dump dumps/${EXM} --savefigdir media/${EXM}_diagnostic
+#python ../fc_uvests_diagnostic.py --dump dumps/${EXM}
+#python ../fc_uvests_diagnostic.py --dump dumps/${EXM} --savefigdir media/${EXM}_diagnostic
 
-#python ../../common/uvests_video.py \
+#python ../fc_uvests_video.py \
 #  --modelsnap snaps/${EXM} \
 #  --tstrain timeseries/${EXM}_train.csv \
 #  --samplelength $SL \
 #  --forecastlength $FL \
-#  --savevideo media/${EXM}_video.gif
+#  --savevideo media/${EXM}_video.gif \
+#  --title "Example #1 by CNN + LSTM + Dense" \
+#  --xlabel "t" \
+#  --ylabel "y"

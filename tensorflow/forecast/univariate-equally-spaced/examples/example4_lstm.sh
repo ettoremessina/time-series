@@ -1,8 +1,7 @@
 #!/bin/bash
-EXM=example3_cnn_lstm_dense
-SL=40
-SSL=10
-FT="t/40.0 + 2.0 * np.cos(t/10.0)"
+EXM=example4_lstm
+SL=20
+FT="1.6 * np.sin(t/10.0) + 1.2 * np.cos(t/20.0)"
 FL=200
 
 rm -rf dumps/${EXM}
@@ -13,7 +12,9 @@ rm -rf media/${EXM}_diagnostic
 python ../../../../common/uvests_gen.py  \
      --tsout timeseries/${EXM}_train.csv \
      --funct "$FT" \
-     --tend 200
+     --tbegin 0 \
+     --tend 200 \
+     --noise "0.1 * np.random.normal(0, 1, sz)"
 
 python ../../../../common/uvests_gen.py  \
      --tsout timeseries/${EXM}_actual.csv \
@@ -24,17 +25,12 @@ python ../../../../common/uvests_gen.py  \
 python ../fc_uvests_fit.py \
      --tstrain timeseries/${EXM}_train.csv \
      --samplelength $SL \
-     --subsamplelength $SSL \
      --modelout models/${EXM} \
-     --cnnlayers "conv(100, 3, 'tanh')" "maxpool(1)" \
-     --lstmlayers "lstm(100, 'tanh')" \
-     --denselayers "dense(100, 'tanh')" \
-     --epochs 200 \
+     --lstmlayers "lstm(20, 'tanh')" "dropout(0.1)" "lstm(40, 'tanh')" "dropout(0.1)" "lstm(20, 'tanh')" "dropout(0.1)" \
+     --epochs 150 \
      --batchsize 50 \
      --optimizer "Adam()" \
-     --loss "MeanAbsoluteError()"
-#     --cnnlayers "conv(64, 3, 'relu', 'RandomUniform(minval=-0.1, maxval=0.1)', 'Ones()')" "maxpool(2)" "conv(64, 2, 'tanh')" "maxpool (1)" \
-#     --lstmlayers "lstm(120, 'tanh')" \
+     --loss "MeanSquaredError()"
 #     --metrics "mean_absolute_error" "mean_squared_logarithmic_error" \
 #     --dumpout dumps/${EXM} \
 #     --logsout logs/${EXM}
@@ -46,17 +42,16 @@ python ../fc_uvests_predict.py \
     --tsactual timeseries/${EXM}_actual.csv \
     --strategy recursive \
     --samplelength $SL \
-    --subsamplelength $SSL \
     --fclength $FL \
     --model models/${EXM} \
     --fcout forecasts/${EXM}_forecast.csv \
-    --error "MeanAbsoluteError()"
+    --error "MeanSquaredError()"
 
 python ../../../../common/uvests_scatter.py \
     --tstrain timeseries/${EXM}_train.csv \
     --tsforecast forecasts/${EXM}_forecast.csv \
     --tsactual timeseries/${EXM}_actual.csv \
-    --title "Example #3 by CNN + LSTM + Dense" \
+    --title "Example #4 by LSTM" \
     --xlabel "t" \
     --ylabel "y"
 
@@ -71,6 +66,6 @@ python ../../../../common/uvests_scatter.py \
 #  --samplelength $SL \
 #  --fclength $FL \
 #  --savevideo media/${EXM}_video.gif \
-#  --title "Example #1 by CNN + LSTM + Dense" \
+#  --title "Example #1 by LSTM" \
 #  --xlabel "t" \
 #  --ylabel "y"

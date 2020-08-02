@@ -23,7 +23,7 @@ python ../../../../common/uvests_gen.py  \
      --tend 400 \
      --tstep 0.5
 
-python ../uvests_fit.py \
+python ../fc_uvests_fit.py \
      --tstrain timeseries/${EXM}_train.csv \
      --samplelength $SL \
      --modelout models/${EXM} \
@@ -41,7 +41,7 @@ python ../uvests_fit.py \
 #     --modelsnapout snaps/${EXM} \
 #     --modelsnapfreq 10
 
-python ../uvests_forecast.py \
+python ../fc_uvests_predict.py \
     --tstrain timeseries/${EXM}_train.csv \
     --tsactual timeseries/${EXM}_actual.csv \
     --strategy recursive \
@@ -59,10 +59,10 @@ python ../../../../common/uvests_scatter.py \
     --xlabel "t" \
     --ylabel "y"
 
-#python ../../common/uvests_diagnostic.py --dump dumps/${EXM}
-#python ../../common/uvests_diagnostic.py --dump dumps/${EXM} --savefigdir media/e${EXM}_diagnostic
+#python ../fc_uvests_diagnostic.py --dump dumps/${EXM}
+#python ../fc_uvests_diagnostic.py --dump dumps/${EXM} --savefigdir media/e${EXM}_diagnostic
 
-#python ../../common/uvests_video.py \
+#python ../fc_uvests_video.py \
 #  --modelsnap snaps/${EXM} \
 #  --tstrain timeseries/${EXM}_train.csv \
 #  --tsactual timeseries/${EXM}_actual.csv \
@@ -70,6 +70,6 @@ python ../../../../common/uvests_scatter.py \
 #  --samplelength $SL \
 #  --fclength $FL \
 #  --savevideo media/${EXM}_video.gif \
-#  --title "Example #1 by MLP" \
+#  --title "Example #1 by LSTM" \
 #  --xlabel "t" \
 #  --ylabel "y"
