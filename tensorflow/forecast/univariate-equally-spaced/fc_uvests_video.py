@@ -16,7 +16,7 @@ def read_timeseries(filename):
     return y_values
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='%(prog)s generates an animated git that shows the forecast curve computed on an input time series as the epochs change.')
+    parser = argparse.ArgumentParser(description='%(prog)s generates an animated git that shows the forecast curve computed on an input univariate equally spaced time series as the epochs change.')
 
     parser.add_argument('--version', action='version', version='%(prog)s 1.0.0')
 
@@ -30,13 +30,13 @@ if __name__ == "__main__":
                         type=str,
                         dest='timeseries_filename',
                         required=True,
-                        help='time series file (csv format)')
+                        help='univariate equally spaced time series file (in csv format) used for training')
 
     parser.add_argument('--tsactual',
                         type=str,
                         dest='actual_filename',
                         required=False,
-                        help='actual time series file (csv format)')
+                        help='actual univariate equally spaced time series file (in csv format)')
 
     parser.add_argument('--strategy',
                         type=str,
@@ -44,14 +44,21 @@ if __name__ == "__main__":
                         required=False,
                         default='recursive',
                         choices=['recursive', 'walk_forward'],
-                        help='recursive uses previous predictions as input for future predictions, walk_forward uses actual as input (default: %(default)s)')
+                        help='recursive uses previous predictions as input for future predictions, walk_forward uses actual as input for future predictions (default: %(default)s)')
 
     parser.add_argument('--samplelength',
                         type=int,
                         dest='sample_length',
                         required=False,
                         default=5,
-                        help='sample length')
+                        help='length of the sample in terms of number of time steps used for training')
+
+    parser.add_argument('--subsamplelength',
+                        type=int,
+                        dest='sub_sample_length',
+                        required=False,
+                        default=1,
+                        help='length of the sub sample in terms of number of time steps used for training (it must be a divisor of samplelength; used when a ConvLSTM layer is present or when both Cnn and LSTM layers are present, otherwise ignored)')
 
     parser.add_argument('--fclength',
                         type=int,
@@ -74,12 +81,12 @@ if __name__ == "__main__":
                         default='',
                         help='if present, it set the prefix title of chart')
 
-    parser.add_argument('--xlabel',
+    parser.add_argument('--tlabel',
                         type=str,
-                        dest='x_axis_label',
+                        dest='t_axis_label',
                         required=False,
                         default='',
-                        help='label of x axis')
+                        help='label of t axis')
 
     parser.add_argument('--ylabel',
                         type=str,
@@ -144,11 +151,34 @@ if __name__ == "__main__":
     for epoch in epochs:
         model = tfm.load_model(os.path.join(args.model_snapshots_path, epoch))
 
+        if (len(model.layers) < 3):
+            raise Exception('invalid model: a model for this program must have at least 3 layers')
+
+        if type(model.layers[1]).__name__ == 'ConvLSTM2D': #workaround for a TF issue
+            model_kind = 'convlstm'
+        elif isinstance(model.layers[1], tfl.TimeDistributed):
+            model_kind = 'cnn-lstm'
+        elif isinstance(model.layers[1], tfl.LSTM) or isinstance(model.layers[1], tfl.Bidirectional):
+            model_kind = 'lstm'
+        elif isinstance(model.layers[1], tfl.Conv1D):
+            model_kind = 'cnn'
+        elif isinstance(model.layers[1], tfl.Dense):
+            model_kind = 'dense'
+        else:
+            raise Exception('unsupported kind of model: the 2nd layer for this program can be only ConvLSTM, LSTM, CNN or Dense')
+
         y_forecast = np.array([])
         to_predict_flat = np.array(y_timeseries[-args.sample_length:])
         for i in range(args.forecast_length):
-            to_predict = to_predict_flat.reshape((1, args.sample_length))
-            ###to_predict = to_predict_flat.reshape((1, 1, args.sample_length))
+            if model_kind == 'convlstm':
+                to_predict = to_predict_flat.reshape((1, args.sub_sample_length, 1, args.sample_length // args.sub_sample_length, 1))
+            elif model_kind == 'cnn-lstm':
+                to_predict = to_predict_flat.reshape((1, args.sub_sample_length, args.sample_length // args.sub_sample_length, 1))
+            elif model_kind == 'cnn' or model_kind == 'lstm':
+                to_predict = to_predict_flat.reshape((1, args.sample_length, 1))
+            elif model_kind == 'dense':
+                to_predict = to_predict_flat.reshape((1, args.sample_length))
+
             prediction = model.predict(to_predict, verbose=0)[0]
             y_forecast = np.append(y_forecast, prediction)
             to_predict_flat = np.delete(to_predict_flat, 0)
@@ -166,7 +196,7 @@ if __name__ == "__main__":
             title_prefix = args.figure_title_prefix + ' ';
         ax.set_title(title_prefix + '[Epoch = %d]' % int(epoch), fontdict={'size': args.label_font_size, 'color': 'orange'})
 
-        ax.set_xlabel(args.x_axis_label, fontdict={'size': args.label_font_size})
+        ax.set_xlabel(args.t_axis_label, fontdict={'size': args.label_font_size})
         ax.set_ylabel(args.y_axis_label, fontdict={'size': args.label_font_size})
         plt.scatter(range(len(y_timeseries)), y_timeseries, color='blue', s=2, marker='.')
         plt.scatter(range(len(y_timeseries), len(y_timeseries) + len(y_actual)), y_actual, color='green', s=2, marker='.')
@@ -178,9 +208,9 @@ if __name__ == "__main__":
         frame = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
         frame  = frame.reshape(fig.canvas.get_width_height()[::-1] + (3,))
         frames.append(frame)
-        print ('Generated frame for epoch {}'.format(epoch))
+        print ("Generated frame for epoch %s" % epoch)
 
     imageio.mimsave(args.save_gif_video, frames, fps=args.frame_per_seconds)
-    print ('Generated {} animated gif'.format(args.save_gif_video))
+    print ("Generated '%s' animated gif" % args.save_gif_video)
 
     print("#### Terminated %s ####" % os.path.basename(__file__));

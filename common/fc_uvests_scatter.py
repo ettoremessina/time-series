@@ -6,9 +6,9 @@ import os
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description=textwrap.dedent('''\
         %(prog)s shows two joined x/y scatter graphs:
-        \tthe blue one is the time series
+        \tthe blue one is the univariate equally spaced time series
         \tthe red one is the forecast
-        \tthe optional green one is the actual time series
+        \tthe optional green one is the actual univariate equally spaced time series
      '''))
 
     parser.add_argument('--version', action='version', version='%(prog)s 1.0.0')
@@ -17,19 +17,19 @@ if __name__ == "__main__":
                         type=str,
                         dest='timeseries_filename',
                         required=True,
-                        help='time series file (csv format)')
+                        help='univariate equally spaced time series file (in csv format) used for training')
 
     parser.add_argument('--tsforecast',
                         type=str,
                         dest='forecast_filename',
                         required=True,
-                        help='forecast file (csv format)')
+                        help='forecast file (in csv format)')
 
     parser.add_argument('--tsactual',
                         type=str,
                         dest='actual_filename',
                         required=False,
-                        help='actual file (csv format)')
+                        help='univariate equally spaced actual file (in csv format)')
 
     parser.add_argument('--title',
                         type=str,
@@ -38,12 +38,12 @@ if __name__ == "__main__":
                         default='',
                         help='if present, it set the title of chart')
 
-    parser.add_argument('--xlabel',
+    parser.add_argument('--tlabel',
                         type=str,
-                        dest='x_axis_label',
+                        dest='t_axis_label',
                         required=False,
                         default='',
-                        help='label of x axis')
+                        help='label of t axis')
 
     parser.add_argument('--ylabel',
                         type=str,
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     fig, ax = plt.subplots(figsize=(args.width, args.height))
 
     ax.set_title(args.figure_title, fontdict={'size': args.label_font_size, 'color': 'orange'})
-    ax.set_xlabel(args.x_axis_label, fontdict={'size': args.label_font_size})
+    ax.set_xlabel(args.t_axis_label, fontdict={'size': args.label_font_size})
     ax.set_ylabel(args.y_axis_label, fontdict={'size': args.label_font_size})
 
     t = 0.0

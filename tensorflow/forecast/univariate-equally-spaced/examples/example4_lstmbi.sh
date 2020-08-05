@@ -52,7 +52,7 @@ python ../../../../common/fc_uvests_scatter.py \
     --tsforecast forecasts/${EXM}_forecast.csv \
     --tsactual timeseries/${EXM}_actual.csv \
     --title "Example #4 by Bi-LSTM" \
-    --xlabel "t" \
+    --tlabel "t" \
     --ylabel "y" \
     --savefig media/${EXM}.png
 
@@ -63,10 +63,10 @@ python ../../../../common/fc_uvests_scatter.py \
 #  --modelsnap snaps/${EXM} \
 #  --tstrain timeseries/${EXM}_train.csv \
 #  --tsactual timeseries/${EXM}_actual.csv \
-#  --strategy walk_forward \
+#  --strategy recursive \
 #  --samplelength $SL \
 #  --fclength $FL \
 #  --savevideo media/${EXM}_video.gif \
 #  --title "Example #1 by Bi-LSTM" \
-#  --xlabel "t" \
+#  --tlabel "t" \
 #  --ylabel "y"

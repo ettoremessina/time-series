@@ -30,7 +30,7 @@ def build_error():
     return eval(exp_error)(None)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='%(prog)s compute forecasting of an univariate time series')
+    parser = argparse.ArgumentParser(description='%(prog)s compute forecasting of an univariate equally spaced time series')
 
     parser.add_argument('--version', action='version', version='%(prog)s 1.0.0')
 
@@ -38,19 +38,19 @@ if __name__ == "__main__":
                         type=str,
                         dest='model_path',
                         required=True,
-                        help='model path')
+                        help='model directory path')
 
     parser.add_argument('--tstrain',
                         type=str,
                         dest='timeseries_filename',
                         required=True,
-                        help='time series file (csv format)')
+                        help='univariate equally spaced time series file (in csv format) used for training')
 
     parser.add_argument('--tsactual',
                         type=str,
                         dest='actual_filename',
                         required=False,
-                        help='actual time series file (csv format)')
+                        help='actual univariate equally spaced time series file (in csv format)')
 
     parser.add_argument('--strategy',
                         type=str,
@@ -58,21 +58,21 @@ if __name__ == "__main__":
                         required=False,
                         default='recursive',
                         choices=['recursive', 'walk_forward'],
-                        help='recursive uses previous predictions as input for future predictions, walk_forward uses actual as input (default: %(default)s)')
+                        help='recursive uses previous predictions as input for future predictions, walk_forward uses actual as input for future predictions (default: %(default)s)')
 
     parser.add_argument('--samplelength',
                         type=int,
                         dest='sample_length',
                         required=False,
                         default=5,
-                        help='sample length')
+                        help='length of the sample in terms of number of time steps used for training')
 
     parser.add_argument('--subsamplelength',
                         type=int,
                         dest='sub_sample_length',
                         required=False,
                         default=1,
-                        help='sub sample length (used when both cnn and lstm layers are present in the model, otherwise ignored)')
+                        help='length of the sub sample in terms of number of time steps used for training (it must be a divisor of samplelength; used when a ConvLSTM layer is present or when both Cnn and LSTM layers are present, otherwise ignored)')
 
     parser.add_argument('--fclength',
                         type=int,
@@ -85,7 +85,7 @@ if __name__ == "__main__":
                         type=str,
                         dest='forecast_data_filename',
                         required=True,
-                        help='forecast data file (csv format) to save')
+                        help='output forecast data file (in csv format)')
 
     parser.add_argument('--error',
                         type=str,
@@ -125,7 +125,7 @@ if __name__ == "__main__":
     elif isinstance(model.layers[1], tfl.Dense):
         model_kind = 'dense'
     else:
-        raise Exception('unsupported kind of model: the 2nd layer for this program can be only ConvLSTM, LSTM, CNN or DENSE')
+        raise Exception('unsupported kind of model: the 2nd layer for this program can be only ConvLSTM, LSTM, CNN or Dense')
 
     print ('Kind of network: %s' % model_kind)
 

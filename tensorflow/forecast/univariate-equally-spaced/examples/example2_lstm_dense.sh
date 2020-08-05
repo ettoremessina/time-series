@@ -52,7 +52,7 @@ python ../../../../common/fc_uvests_scatter.py \
     --tsforecast forecasts/${EXM}_forecast.csv \
     --tsactual timeseries/${EXM}_actual.csv \
     --title "Example #2 by LSTM + Dense" \
-    --xlabel "t" \
+    --tlabel "t" \
     --ylabel "y" \
     --savefig media/${EXM}.png
 
@@ -66,5 +66,5 @@ python ../../../../common/fc_uvests_scatter.py \
 #  --forecastlength $FL \
 #  --savevideo media/${EXM}_video.gif \
 #  --title "Example #1 by LSTM + Dense" \
-#  --xlabel "t" \
+#  --tlabel "t" \
 #  --ylabel "y"

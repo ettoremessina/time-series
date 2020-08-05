@@ -4,7 +4,7 @@ import csv
 import os
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='%(prog)s generates an univariate time series')
+    parser = argparse.ArgumentParser(description='%(prog)s generates an univariate equally spaced time series')
 
     parser.add_argument('--version', action='version', version='%(prog)s 1.0.0')
 
@@ -12,7 +12,7 @@ if __name__ == "__main__":
                         type=str,
                         dest='ts_output_filename',
                         required=True,
-                        help='time series output file (csv format)')
+                        help='univariate equally spaced time series output file (in csv format)')
 
     parser.add_argument('--funct',
                         type=str,
@@ -66,6 +66,6 @@ if __name__ == "__main__":
         writer.writerow(['y'])
         for i in range(0, t_values.size):
             writer.writerow([func_t(t_values[i]) + noise[i]])
-    print("Generated univariate time series file '%s'" % args.ts_output_filename)
+    print("Generated univariate equally spaced time series file '%s'" % args.ts_output_filename)
 
     print("#### Terminated %s ####" % os.path.basename(__file__));

@@ -303,7 +303,7 @@ class EpochLogger(tfcb.Callback):
             print ('\nSaved #{} snapshot model'.format(epoch, '09'))
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='%(prog)s builds a model to fit an univariate time series using a configurable LSTM neural network')
+    parser = argparse.ArgumentParser(description='%(prog)s builds a model to fit an univariate equally spaced time series using a configurable neural network')
 
     parser.add_argument('--version', action='version', version='%(prog)s 1.0.0')
 
@@ -311,7 +311,7 @@ if __name__ == "__main__":
                         type=str,
                         dest='train_timeseries_filename',
                         required=True,
-                        help='univariate time series file (csv format) for training')
+                        help='univariate equally spaced time series file (in csv format) for training')
 
     parser.add_argument('--modelout',
                         type=str,
@@ -324,20 +324,20 @@ if __name__ == "__main__":
                         dest='sample_length',
                         required=False,
                         default=5,
-                        help='sample length')
+                        help='length of the sample in terms of number of time steps')
 
     parser.add_argument('--subsamplelength',
                         type=int,
                         dest='sub_sample_length',
                         required=False,
                         default=0,
-                        help='sub sample length (used when both cnn and lstm layers are present in the model, otherwise ignored)')
+                        help='length of the sub sample in terms of number of time steps (it must be a divisor of samplelength; used when a ConvLSTM layer is present or when both Cnn and LSTM layers are present, otherwise ignored)')
 
     parser.add_argument('--bestmodelmonitor',
                         type=str,
                         dest='best_model_monitor',
                         required=False,
-                        help='quantity to monitor in order to save the best model')
+                        help='quantity name to monitor in order to save the best model')
 
     parser.add_argument('--epochs',
                         type=int,
@@ -383,7 +383,7 @@ if __name__ == "__main__":
                         dest='dense_layers_layout',
                         required=False,
                         default=[],
-                        help='dense layer layout')
+                        help='Dense layer layout')
 
     parser.add_argument('--optimizer',
                         type=str,
@@ -430,7 +430,7 @@ if __name__ == "__main__":
                         dest='model_snapshots_freq',
                         required=False,
                         default=25,
-                        help='frequency in epochs to make the snapshot of model')
+                        help='frequency in terms of epochs to make the snapshot of model')
 
     args = parser.parse_args()
 
