@@ -31,8 +31,8 @@ python ../fc_uvests_fit.py \
      --batchsize 50 \
      --optimizer "Adam()" \
      --loss "MeanSquaredError()"
-     #--metrics "mean_squared_error" \
-     #--bestmodelmonitor "mean_squared_error"
+#     --metrics "mean_squared_error" \
+#     --bestmodelmonitor "mean_squared_error"
 #     --dumpout dumps/${EXM} \
 #     --logsout logs/${EXM} \
 #     --modelsnapout snaps/${EXM} \
@@ -49,16 +49,17 @@ python ../fc_uvests_predict.py \
     --fcout forecasts/${EXM}_forecast.csv \
     --error "MeanSquaredError()"
 
-python ../../../../common/uvests_scatter.py \
+python ../../../../common/fc_uvests_scatter.py \
     --tstrain timeseries/${EXM}_train.csv \
     --tsforecast forecasts/${EXM}_forecast.csv \
     --tsactual timeseries/${EXM}_actual.csv \
     --title "Example #2 by ConvLSTM" \
     --xlabel "t" \
-    --ylabel "y"
+    --ylabel "y" \
+    --savefig media/${EXM}.png
 
-#python ../fc_uvests_diagnostic.py --dump dumps/${EXM}
-#python ../fc_uvests_diagnostic.py --dump dumps/${EXM} --savefigdir media/${EXM}_diagnostic
+#python ../../../../common/fc_uvests_diagnostic.py --dump dumps/${EXM}
+#python ../../../../common/fc_uvests_diagnostic.py --dump dumps/${EXM} --savefigdir media/${EXM}_diagnostic
 
 #python ../fc_uvests_video.py \
 #  --modelsnap snaps/${EXM} \

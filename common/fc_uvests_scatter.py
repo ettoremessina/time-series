@@ -118,6 +118,7 @@ if __name__ == "__main__":
 
     if args.save_figure_filename:
         plt.savefig(args.save_figure_filename)
+        print("Saved file '%s'" % args.save_figure_filename);
     else:
         plt.show()
 
