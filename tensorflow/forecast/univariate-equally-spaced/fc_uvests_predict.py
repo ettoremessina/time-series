@@ -72,7 +72,7 @@ if __name__ == "__main__":
                         dest='sub_sample_length',
                         required=False,
                         default=1,
-                        help='length of the sub sample in terms of number of time steps used for training (it must be a divisor of samplelength; used when a ConvLSTM layer is present or when both Cnn and LSTM layers are present, otherwise ignored)')
+                        help='length of the sub sample in terms of number of time steps used for training (it must be a divisor of samplelength; used when a ConvLSTM layer is present or when both CNN and LSTM layers are present, otherwise ignored)')
 
     parser.add_argument('--fclength',
                         type=int,
