@@ -59,7 +59,7 @@ python ../../../../common/fc_uvests_scatter.py \
     --ylabel "y" \
     --savefig media/${EXM}.png
 
-#python ../../../../common/nn_diagnostic.py --dump dumps/${EXM} --savefigdir media/${EXM}_diagnostic
+#python ../../../../common/nn_dumps_scatter.py --dump dumps/${EXM} --savefigdir media/${EXM}_diagnostic
 
 #python ../fc_uvests_video.py \
 #  --modelsnap snaps/${EXM} \
