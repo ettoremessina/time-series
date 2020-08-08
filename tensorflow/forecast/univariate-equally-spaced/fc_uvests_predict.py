@@ -81,7 +81,7 @@ if __name__ == "__main__":
                         default=10,
                         help='length of forecast (number of values to predict)')
 
-    parser.add_argument('--fcout',
+    parser.add_argument('--tsforecastout',
                         type=str,
                         dest='forecast_data_filename',
                         required=True,

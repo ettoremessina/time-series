@@ -48,7 +48,7 @@ python ../fc_uvests_predict.py \
     --subsamplelength $SSL \
     --fclength $FL \
     --model models/${EXM} \
-    --fcout forecasts/${EXM}_forecast.csv \
+    --tsforecastout forecasts/${EXM}_forecast.csv \
     --error "MeanAbsoluteError()"
 
 python ../../../../common/fc_uvests_scatter.py \
