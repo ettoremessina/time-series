@@ -216,7 +216,7 @@ def build_dense_layer(dense_layer_layout):
 
     return dense_layer
 
-def build_model():
+def build_net():
     if is_there_convlstm_layer():
         input_shape = (args.sub_sample_length, 1, args.sample_length // args.sub_sample_length, 1)
     elif is_there_cnn_layer() and is_there_lstm_layer():
@@ -303,9 +303,9 @@ class EpochLogger(tfcb.Callback):
             print ('\nSaved #{} snapshot model'.format(epoch, '09'))
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='%(prog)s builds a model to fit an univariate equally spaced time series using a configurable neural network')
+    parser = argparse.ArgumentParser(description='%(prog)s builds a model to fit an univariate equally spaced time series using a configurable neural network with TensorFlow')
 
-    parser.add_argument('--version', action='version', version='%(prog)s 1.0.0')
+    parser.add_argument('--version', action='version', version='%(prog)s 1.0.1')
 
     parser.add_argument('--tstrain',
                         type=str,
@@ -433,15 +433,14 @@ if __name__ == "__main__":
                         help='frequency in terms of epochs to make the snapshot of model')
 
     args = parser.parse_args()
+    validate_arguments()
 
     print("#### Started %s ####" % os.path.basename(__file__));
-
-    validate_arguments()
 
     sequence = read_timeseries(args.train_timeseries_filename)
     X_train, y_train = build_samples(sequence)
 
-    model = build_model()
+    model = build_net()
 
     optimizer = build_optimizer()
     loss=build_loss()
